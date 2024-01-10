@@ -20,12 +20,20 @@ struct HapticSystemConfig {
   int drv_wl;
 };
 
+struct HapticPatternBump {
+  int dx;
+  float strength;
+};
+
 class HapticSystem {
  private:
   int sen_pca_id;
   MagneticSensorI2C sensor = MagneticSensorI2C(0, 0, 0, 0);
   BLDCMotor motor = BLDCMotor(0);
   BLDCDriver6PWM driver = BLDCDriver6PWM(0, 0, 0, 0, 0, 0);
+  HapticPatternBump* bumps;
+  int bump_count;
+  float mouseOffsetX;
 
   void pcaselect();
 
@@ -35,6 +43,7 @@ class HapticSystem {
 
   bool init();
   void loop();
-  int feedback_mouse_position();
+  void set_pattern(HapticPatternBump* bumps, int count);
+  void revoke_pattern();
   float angle();
 };

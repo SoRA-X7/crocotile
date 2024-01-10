@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <BleMouse.h>
 #include <SimpleFOC.h>
 #include <Wire.h>
@@ -16,49 +17,82 @@ TaskHandle_t thp[1];
 
 TimerHandle_t handle;
 
-void mouseLoop(TimerHandle_t pxTimer) {
-  mouse.loop();
-  // Serial.println("run");
+// Commander cmdr;
+
+char* pattern_str = NULL;
+DynamicJsonDocument current_pattern(2048);
+HapticPatternBump bumps[32];
+int bump_count;
+
+void cmdP(String arg) {
+  Serial.println("cmd:P");
+  strcpy(pattern_str, arg.c_str());
+  Serial.println(pattern_str);
+  deserializeJson(current_pattern, pattern_str);
+  auto ts = current_pattern["bumps"].as<JsonArray>();
+  int i = 0;
+  // bumps = (HapticPatternBump*)malloc(sizeof(HapticPatternBump) * ts.size());
+  for (JsonObject t : ts) {
+    HapticPatternBump b{t["x"], t["strength"]};
+    bumps[i++] = b;
+  }
+  bump_count = i;
+  systemX.set_pattern(bumps, bump_count);
+  Serial.println("cmd:P ok");
+
+  return;
 }
 
-// void registerMouseTimer(void* args) {
-//   Serial.println("timer init start");
-//   mouse.init();
-//   sub_timer = timerBegin(3, 80, true);
-//   timerAttachInterrupt(sub_timer, &mouseLoop, true);
-//   timerAlarmWrite(sub_timer, 5000, true);
-//   Serial.println("timer init done");
-//   delay(1000);
-//   timerAlarmEnable(sub_timer);
-// }
+void cmdN() {
+  Serial.println("cmd:N");
+  current_pattern.clear();
+  bump_count = 0;
+  systemX.revoke_pattern();
+  Serial.println("cmd:N ok");
+  return;
+}
+
+void runCommand() {
+  if (!Serial.available()) return;
+  String cmd = Serial.readStringUntil('\n');
+  if (cmd[0] == 'P') {
+    cmdP(cmd.substring(1));
+  } else if (cmd[0] == 'N') {
+    cmdN();
+  }
+}
+
+void mouseLoop(void* params) {
+  for (;;) {
+    vTaskDelay(10);
+    mouse.loop();
+  }
+}
 
 void setup() {
+  pattern_str = (char*)malloc(sizeof(char) * 4096);
   // put your setup code here, to run once:
-  Serial.begin(115200);   // Log
-  Serial1.begin(115200);  // To mouse
-  Wire.begin();           // Magnetic Encoder
-  Serial.println("Crocotile MCU v0.1.2");
+  Serial.begin(115200);  // Log
+                         //   Serial1.begin(115200);  // To mouse
+  Wire.begin();          // Magnetic Encoder
+  Serial.println("Crocotile MCU v0.2.0");
   Serial.print("port tick rate: ");
   Serial.println(portTICK_RATE_MS);
 
-  // systemX = HapticSystem(xConf);
+  // cmdr = Commander(Serial, '\n', true);
+  // cmdr.add('P', cmdP, "register linear haptic pattern");
+  // cmdr.add('N', cmdN, "reset haptic pattern");
 
   systemX.init();
 
-  // xTaskCreatePinnedToCore(registerMouseTimer, "registerMouseTimer", 4096,
-  // NULL,
-  //                         3, &thp[0], 0);
-  // xTaskCreatePinnedToCore(mouseLoop, "mouseLoop", 2048, NULL, 3, &thp[0], 0);
   mouse.init();
-  handle = xTimerCreate("mouseLoop", (10 / portTICK_RATE_MS), pdTRUE, (void*)0,
-                        mouseLoop);
-  if (handle != NULL) {
-    xTimerStart(handle, 0);
-  }
+  xTaskCreate(mouseLoop, "mouseLoop", 4096, NULL, 3, NULL);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+  // cmdr.run();
+  runCommand();
   systemX.loop();
   vTaskDelay(1);
 }

@@ -28,7 +28,7 @@ HapticSystem::~HapticSystem() {}
 bool HapticSystem::init() {
   pcaselect();
   motor.monitor_variables = _MON_TARGET | _MON_VOLT_Q | _MON_VEL | _MON_ANGLE;
-  motor.monitor_downsample = 1000;
+  motor.monitor_downsample = 100;
   motor.useMonitoring(Serial);
   sensor.init();
   driver.voltage_power_supply = 5;
@@ -58,17 +58,47 @@ bool HapticSystem::init() {
   return true;
 }
 
+// void HapticSystem::loop() {
+//   pcaselect();
+//   motor.loopFOC();
+//   const int split = 1;
+//   float angle = motor.shaft_angle * 4;
+//   long detent = round(angle);
+//   float diff = angle - detent;
+//   float torque = -diff * split;
+//   torque = torque * torque * 5 * ((torque > 0) - (torque < 0));
+//   motor.move(torque);
+//   // motor.move(0);
+// }
+
 void HapticSystem::loop() {
-  pcaselect();
   motor.loopFOC();
-  const int split = 1;
-  float angle = motor.shaft_angle * 4;
-  long detent = round(angle);
-  float diff = angle - detent;
-  float torque = -diff * split;
-  torque = torque * torque * 5 * ((torque > 0) - (torque < 0));
-  motor.move(torque);
-  // motor.move(0);
+  if (bumps != NULL) {
+    float dx = (angle() - mouseOffsetX) * 400;  // 400 = sens
+
+    float strength = 0;
+    for (int i = 0; i < bump_count; i++) {
+      int distance = dx - bumps[i].dx;
+      if (distance == 0) continue;
+      if (distance > 100) continue;
+      strength += bumps[i].strength / (distance / 10.0);
+    }
+    motor.move(strength);
+  } else {
+    motor.move(0);
+  }
+  motor.monitor();
+}
+
+void HapticSystem::set_pattern(HapticPatternBump* bumps, int count) {
+  this->bumps = bumps;
+  this->bump_count = count;
+  this->mouseOffsetX = this->angle();
+}
+
+void HapticSystem::revoke_pattern() {
+  bumps = NULL;
+  bump_count = 0;
 }
 
 float HapticSystem::angle() { return motor.shaft_angle; }
