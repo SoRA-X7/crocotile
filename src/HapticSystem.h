@@ -34,6 +34,8 @@ class HapticSystem {
   HapticPatternBump* bumps;
   int bump_count;
   float mouseOffsetX;
+  int mouseMinX;
+  int mouseMaxX;
 
   void pcaselect();
 
@@ -43,7 +45,7 @@ class HapticSystem {
 
   bool init();
   void loop();
-  void set_pattern(HapticPatternBump* bumps, int count);
+  void set_pattern(HapticPatternBump* bumps, int count, int min, int max);
   void revoke_pattern();
   float angle();
 };

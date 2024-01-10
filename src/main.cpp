@@ -37,7 +37,9 @@ void cmdP(String arg) {
     bumps[i++] = b;
   }
   bump_count = i;
-  systemX.set_pattern(bumps, bump_count);
+  int min = current_pattern["xNeg"];
+  int max = current_pattern["xPos"];
+  systemX.set_pattern(bumps, bump_count, -min, max);
   Serial.println("cmd:P ok");
 
   return;
