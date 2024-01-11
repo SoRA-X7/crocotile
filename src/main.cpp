@@ -33,7 +33,7 @@ void cmdP(String arg) {
   int i = 0;
   // bumps = (HapticPatternBump*)malloc(sizeof(HapticPatternBump) * ts.size());
   for (JsonObject t : ts) {
-    HapticPatternBump b{t["x"], t["strength"]};
+    HapticPatternBump b{t["x"], t["strength"], t["curve"]};
     bumps[i++] = b;
   }
   bump_count = i;
@@ -54,6 +54,13 @@ void cmdN() {
   return;
 }
 
+void cmdR(String arg) {
+  Serial.println("cmd:R");
+  int val = arg.toInt();
+  systemX.revise_position(val);
+  Serial.println("cmd:R ok");
+}
+
 void runCommand() {
   if (!Serial.available()) return;
   String cmd = Serial.readStringUntil('\n');
@@ -61,6 +68,8 @@ void runCommand() {
     cmdP(cmd.substring(1));
   } else if (cmd[0] == 'N') {
     cmdN();
+  } else if (cmd[0] == 'R') {
+    cmdR(cmd.substring(1));
   }
 }
 

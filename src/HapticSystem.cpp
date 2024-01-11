@@ -77,19 +77,24 @@ void HapticSystem::loop() {
     float dx = (angle() - mouseOffsetX) * 400;  // 400 = sens
 
     float strength = 0;
-    if (dx < mouseMinX) {
-      strength = 2 * (mouseMinX - dx);
-    } else if (dx > mouseMaxX) {
-      strength = -2 * (dx - mouseMaxX);
+    int deadzone = 30;
+    if (dx < mouseMinX - deadzone) {
+      strength = 1 * (mouseMinX - dx);
+    } else if (dx > mouseMaxX + deadzone) {
+      strength = -1 * (dx - mouseMaxX);
     } else {
       for (int i = 0; i < bump_count; i++) {
-        int distance = dx - bumps[i].dx;
-        if (distance == 0) continue;
-        if (distance > 100) continue;
-        strength += bumps[i].strength / (distance / 10.0);
+        auto bump = bumps[i];
+        int x = dx - bump.dx;
+        if (-bump.curve < x && x < 0) {
+          strength += bump.strength * (-x - bump.curve) / bump.curve;
+        } else if (0 < x && x < bump.curve) {
+          strength += bump.strength * (-x + bump.curve) / bump.curve;
+        }
+        // strength += bumps[i].strength / (x / 10.0);
       }
     }
-    motor.move(strength * 0.5);
+    motor.move(strength * 0.7);
   } else {
     motor.move(0);
   }
@@ -108,6 +113,12 @@ void HapticSystem::set_pattern(HapticPatternBump* bumps, int count, int min,
 void HapticSystem::revoke_pattern() {
   bumps = NULL;
   bump_count = 0;
+}
+
+void HapticSystem::revise_position(int x) {
+  float dx = (angle() - mouseOffsetX) * 400;  // 400 = sens
+  float diff = x - dx;
+  mouseOffsetX -= diff / 400;
 }
 
 float HapticSystem::angle() { return motor.shaft_angle; }

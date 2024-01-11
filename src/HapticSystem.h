@@ -23,6 +23,7 @@ struct HapticSystemConfig {
 struct HapticPatternBump {
   int dx;
   float strength;
+  float curve;
 };
 
 class HapticSystem {
@@ -47,5 +48,6 @@ class HapticSystem {
   void loop();
   void set_pattern(HapticPatternBump* bumps, int count, int min, int max);
   void revoke_pattern();
+  void revise_position(int x);
   float angle();
 };
