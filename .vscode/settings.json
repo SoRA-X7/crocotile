@@ -6,7 +6,10 @@
     "fstream": "cpp",
     "istream": "cpp",
     "ostream": "cpp",
-    "sstream": "cpp"
+    "sstream": "cpp",
+    "cstddef": "cpp",
+    "functional": "cpp",
+    "algorithm": "cpp"
   },
   "cmake.configureOnOpen": true
 }
