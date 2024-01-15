@@ -8,7 +8,7 @@
 #include "MouseDriver.h"
 
 // const HapticSystemConfig xConf{2,45,46,2,5,4,13}; // Mega2560
-const HapticSystemConfig xConf{1, 4, 2, 15, 0, 19, 18};  // ESP32
+const HapticSystemConfig xConf{1, 12, 13, 10, 11, 46, 9};  // ESP32
 HapticSystem systemX = HapticSystem(xConf);
 MouseDriver mouse = MouseDriver(400, &systemX);
 
@@ -85,7 +85,7 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);  // Log
                          //   Serial1.begin(115200);  // To mouse
-  Wire.begin();          // Magnetic Encoder
+  Wire.begin(20, 21);    // Magnetic Encoder
   Serial.println("Crocotile MCU v0.2.0");
   Serial.print("port tick rate: ");
   Serial.println(portTICK_RATE_MS);
