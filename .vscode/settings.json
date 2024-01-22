@@ -9,7 +9,8 @@
     "sstream": "cpp",
     "cstddef": "cpp",
     "functional": "cpp",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "new": "cpp"
   },
   "cmake.configureOnOpen": true
 }

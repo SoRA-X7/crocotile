@@ -8,38 +8,63 @@
 #include "MouseDriver.h"
 
 // const HapticSystemConfig xConf{2,45,46,2,5,4,13}; // Mega2560
-const HapticSystemConfig xConf{1, 12, 13, 10, 11, 46, 9};  // ESP32
+// const HapticSystemConfig xConf{0, 1, 12, 13, 10, 11, 46, 9};
+const HapticSystemConfig xConf{.direction = 0,
+                               .sen_pca_id = 1,
+                               .sen_i2c_bus = 0,
+                               .sen_i2c_scl = 21,
+                               .sen_i2c_sda = 20,
+                               .drv_uh = 12,
+                               .drv_ul = 13,
+                               .drv_vh = 10,
+                               .drv_vl = 11,
+                               .drv_wh = 46,
+                               .drv_wl = 9};
 HapticSystem systemX = HapticSystem(xConf);
-MouseDriver mouse = MouseDriver(400, &systemX);
 
-hw_timer_t* sub_timer = NULL;
-TaskHandle_t thp[1];
-
-TimerHandle_t handle;
-
-// Commander cmdr;
+// const HapticSystemConfig yConf{1, 1, 15, 16, 6, 7, 4, 5};
+const HapticSystemConfig yConf{.direction = 1,
+                               .sen_pca_id = 1,
+                               .sen_i2c_bus = 1,
+                               .sen_i2c_scl = 39,
+                               .sen_i2c_sda = 38,
+                               .drv_uh = 15,
+                               .drv_ul = 16,
+                               .drv_vh = 6,
+                               .drv_vl = 7,
+                               .drv_wh = 4,
+                               .drv_wl = 5};
+HapticSystem systemY = HapticSystem(yConf);
+MouseDriver mouse = MouseDriver(400, &systemX, &systemY, 40, 41);
 
 char* pattern_str = NULL;
-DynamicJsonDocument current_pattern(2048);
-HapticPatternBump bumps[32];
-int bump_count;
+DynamicJsonDocument pattern_json(8192);
+HapticPattern* pattern = NULL;
 
 void cmdP(String arg) {
+  if (pattern != NULL) {
+    delete pattern;
+    pattern = NULL;
+  }
   Serial.println("cmd:P");
   strcpy(pattern_str, arg.c_str());
   Serial.println(pattern_str);
-  deserializeJson(current_pattern, pattern_str);
-  auto ts = current_pattern["bumps"].as<JsonArray>();
+
+  deserializeJson(pattern_json, pattern_str);
+
+  auto ts = pattern_json["bumps"].as<JsonArray>();
+  pattern = new HapticPattern(ts.size());
   int i = 0;
-  // bumps = (HapticPatternBump*)malloc(sizeof(HapticPatternBump) * ts.size());
   for (JsonObject t : ts) {
-    HapticPatternBump b{t["x"], t["strength"], t["curve"]};
-    bumps[i++] = b;
+    HapticPatternBump b{t["x"], t["y"], t["strength"], t["curve"]};
+    pattern->bumps[i++] = b;
   }
-  bump_count = i;
-  int min = current_pattern["xNeg"];
-  int max = current_pattern["xPos"];
-  systemX.set_pattern(bumps, bump_count, -min, max);
+  pattern->x_neg = pattern_json["xNeg"];
+  pattern->x_pos = pattern_json["xPos"];
+  pattern->y_neg = pattern_json["yNeg"];
+  pattern->y_pos = pattern_json["yPos"];
+  systemX.set_pattern(pattern);
+  systemY.set_pattern(pattern);
   Serial.println("cmd:P ok");
 
   return;
@@ -47,17 +72,21 @@ void cmdP(String arg) {
 
 void cmdN() {
   Serial.println("cmd:N");
-  current_pattern.clear();
-  bump_count = 0;
   systemX.revoke_pattern();
+  systemY.revoke_pattern();
+  pattern_json.clear();
+  delete pattern;
+  pattern = NULL;
   Serial.println("cmd:N ok");
   return;
 }
 
 void cmdR(String arg) {
   Serial.println("cmd:R");
-  int val = arg.toInt();
-  systemX.revise_position(val);
+  int valX, valY;
+  sscanf(arg.c_str(), "%d,%d", &valX, &valY);
+  systemX.revise_position(valX, 0);
+  systemY.revise_position(valY, 0);
   Serial.println("cmd:R ok");
 }
 
@@ -81,12 +110,12 @@ void mouseLoop(void* params) {
 }
 
 void setup() {
-  pattern_str = (char*)malloc(sizeof(char) * 4096);
+  pattern_str = (char*)malloc(sizeof(char) * 32768);
   // put your setup code here, to run once:
   Serial.begin(115200);  // Log
                          //   Serial1.begin(115200);  // To mouse
-  Wire.begin(20, 21);    // Magnetic Encoder
-  Serial.println("Crocotile MCU v0.2.0");
+                         //   Wire.begin(20, 21);    // Magnetic Encoder
+  Serial.println("Crocotile MCU v0.3.0");
   Serial.print("port tick rate: ");
   Serial.println(portTICK_RATE_MS);
 
@@ -95,9 +124,11 @@ void setup() {
   // cmdr.add('N', cmdN, "reset haptic pattern");
 
   systemX.init();
+  systemY.init();
 
   mouse.init();
   xTaskCreate(mouseLoop, "mouseLoop", 4096, NULL, 3, NULL);
+  Serial.println("ready!");
 }
 
 void loop() {
@@ -105,5 +136,6 @@ void loop() {
   // cmdr.run();
   runCommand();
   systemX.loop();
+  systemY.loop();
   vTaskDelay(1);
 }

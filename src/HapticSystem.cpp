@@ -15,9 +15,13 @@
 #define FOC_VOLTAGE_LIMIT 5
 
 HapticSystem::HapticSystem(const HapticSystemConfig& cfg) {
+  direction = cfg.direction;
   sen_pca_id = cfg.sen_pca_id;
+  sen_i2c_scl = cfg.sen_i2c_scl;
+  sen_i2c_sda = cfg.sen_i2c_sda;
   sensor = MagneticSensorI2C(sen_i2c_addr, sen_res, sen_angle_register_msb,
                              sen_bits_used_msb);
+  wire = TwoWire(cfg.sen_i2c_bus);
   motor = BLDCMotor(7);
   driver = BLDCDriver6PWM(cfg.drv_uh, cfg.drv_ul, cfg.drv_vh, cfg.drv_vl,
                           cfg.drv_wh, cfg.drv_wl);
@@ -30,7 +34,10 @@ bool HapticSystem::init() {
   motor.monitor_variables = _MON_TARGET | _MON_VOLT_Q | _MON_VEL | _MON_ANGLE;
   motor.monitor_downsample = 100;
   motor.useMonitoring(Serial);
-  sensor.init();
+  Serial.print(sen_i2c_scl);
+  Serial.println(sen_i2c_sda);
+  wire.begin(sen_i2c_sda, sen_i2c_scl);
+  sensor.init(&wire);
   driver.voltage_power_supply = 5;
   driver.voltage_limit = 5;
   driver.pwm_frequency = 32000;
@@ -58,38 +65,28 @@ bool HapticSystem::init() {
   return true;
 }
 
-// void HapticSystem::loop() {
-//   pcaselect();
-//   motor.loopFOC();
-//   const int split = 1;
-//   float angle = motor.shaft_angle * 4;
-//   long detent = round(angle);
-//   float diff = angle - detent;
-//   float torque = -diff * split;
-//   torque = torque * torque * 5 * ((torque > 0) - (torque < 0));
-//   motor.move(torque);
-//   // motor.move(0);
-// }
-
 void HapticSystem::loop() {
   motor.loopFOC();
-  if (bumps != NULL) {
-    float dx = (angle() - mouseOffsetX) * 400;  // 400 = sens
+  if (haptic_pattern != NULL && haptic_pattern->bumps != NULL) {
+    int neg = direction == 0 ? haptic_pattern->x_neg : haptic_pattern->x_pos;
+    int pos = direction == 0 ? haptic_pattern->y_neg : haptic_pattern->y_pos;
+
+    float dt = (angle() - mouseOffset) * 400;  // 400 = sens
 
     float strength = 0;
     int deadzone = 30;
-    if (dx < mouseMinX - deadzone) {
-      strength = 1 * (mouseMinX - dx);
-    } else if (dx > mouseMaxX + deadzone) {
-      strength = -1 * (dx - mouseMaxX);
+    if (dt < neg - deadzone) {
+      strength = 1 * (neg - dt);
+    } else if (dt > pos + deadzone) {
+      strength = -1 * (dt - pos);
     } else {
-      for (int i = 0; i < bump_count; i++) {
-        auto bump = bumps[i];
-        int x = dx - bump.dx;
-        if (-bump.curve < x && x < 0) {
-          strength += bump.strength * (-x - bump.curve) / bump.curve;
-        } else if (0 < x && x < bump.curve) {
-          strength += bump.strength * (-x + bump.curve) / bump.curve;
+      for (int i = 0; i < haptic_pattern->bump_count; i++) {
+        auto bump = haptic_pattern->bumps[i];
+        int t = dt - (direction == 0 ? bump.dx : bump.dy);
+        if (-bump.curve < t && t < 0) {
+          strength += bump.strength * (-t - bump.curve) / bump.curve;
+        } else if (0 < t && t < bump.curve) {
+          strength += bump.strength * (-t + bump.curve) / bump.curve;
         }
         // strength += bumps[i].strength / (x / 10.0);
       }
@@ -101,24 +98,18 @@ void HapticSystem::loop() {
   motor.monitor();
 }
 
-void HapticSystem::set_pattern(HapticPatternBump* bumps, int count, int min,
-                               int max) {
-  this->bumps = bumps;
-  this->bump_count = count;
-  this->mouseOffsetX = this->angle();
-  this->mouseMinX = min;
-  this->mouseMaxX = max;
+void HapticSystem::set_pattern(HapticPattern* pat) {
+  this->haptic_pattern = pat;
+  this->mouseOffset = this->angle();
 }
 
-void HapticSystem::revoke_pattern() {
-  bumps = NULL;
-  bump_count = 0;
-}
+void HapticSystem::revoke_pattern() { this->haptic_pattern = NULL; }
 
-void HapticSystem::revise_position(int x) {
-  float dx = (angle() - mouseOffsetX) * 400;  // 400 = sens
-  float diff = x - dx;
-  mouseOffsetX -= diff / 400;
+void HapticSystem::revise_position(int x, int y) {
+  int t = this->direction == 0 ? x : y;
+  float dt = (angle() - mouseOffset) * 400;  // 400 = sens
+  float diff = x - dt;
+  mouseOffset -= diff / 400;
 }
 
 float HapticSystem::angle() { return motor.shaft_angle; }
