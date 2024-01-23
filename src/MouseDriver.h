@@ -21,8 +21,8 @@ class MouseDriver {
               int pin_left, int pin_right);
   void init();
   void loop();
-  void left_click();
+  void left_press();
   void left_release();
-  void right_click();
+  void right_press();
   void right_release();
 };

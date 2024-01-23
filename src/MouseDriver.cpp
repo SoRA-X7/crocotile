@@ -2,9 +2,9 @@
 
 MouseDriver* instance;
 
-void g_left_click() { instance->left_click(); }
+void g_left_press() { instance->left_press(); }
 void g_left_release() { instance->left_release(); }
-void g_right_click() { instance->right_click(); }
+void g_right_press() { instance->right_press(); }
 void g_right_release() { instance->right_release(); }
 
 MouseDriver::MouseDriver(float _sens, HapticSystem* _sysX, HapticSystem* _sysY,
@@ -26,8 +26,8 @@ void MouseDriver::init() {
 
   instance = this;
 
-  // attachInterrupt(pin_left, g_left_click, FALLING);
-  // attachInterrupt(pin_right, g_right_click, FALLING);
+  // attachInterrupt(pin_left, g_left_press, FALLING);
+  // attachInterrupt(pin_right, g_right_press, FALLING);
 }
 
 void MouseDriver::loop() {
@@ -42,7 +42,7 @@ void MouseDriver::loop() {
     mouse.move(div_x, div_y, 0);
 
     if (!left_pressed && digitalRead(pin_left) == LOW) {
-      left_click();
+      left_press();
       left_pressed = true;
     } else if (left_pressed && digitalRead(pin_left) == HIGH) {
       left_release();
@@ -50,7 +50,7 @@ void MouseDriver::loop() {
     }
 
     if (!right_pressed && digitalRead(pin_right) == LOW) {
-      right_click();
+      right_press();
       right_pressed = true;
     } else if (right_pressed && digitalRead(pin_right) == HIGH) {
       right_release();
@@ -59,17 +59,17 @@ void MouseDriver::loop() {
   }
 }
 
-void MouseDriver::left_click() {
+void MouseDriver::left_press() {
   Serial.println("left_c");
-  if (mouse.isConnected()) mouse.click(1);
+  if (mouse.isConnected()) mouse.press(1);
 }
 void MouseDriver::left_release() {
   Serial.println("left_r");
   if (mouse.isConnected()) mouse.release(1);
 }
-void MouseDriver::right_click() {
+void MouseDriver::right_press() {
   Serial.println("right_c");
-  if (mouse.isConnected()) mouse.click(2);
+  if (mouse.isConnected()) mouse.press(2);
 }
 void MouseDriver::right_release() {
   Serial.println("right_r");
