@@ -2,11 +2,6 @@
 
 MouseDriver* instance;
 
-void g_left_press() { instance->left_press(); }
-void g_left_release() { instance->left_release(); }
-void g_right_press() { instance->right_press(); }
-void g_right_release() { instance->right_release(); }
-
 MouseDriver::MouseDriver(float _sens, HapticSystem* _sysX, HapticSystem* _sysY,
                          int _pin_left, int _pin_right) {
   sens = _sens;
@@ -23,11 +18,6 @@ void MouseDriver::init() {
 
   pinMode(pin_left, INPUT_PULLUP);
   pinMode(pin_right, INPUT_PULLUP);
-
-  instance = this;
-
-  // attachInterrupt(pin_left, g_left_press, FALLING);
-  // attachInterrupt(pin_right, g_right_press, FALLING);
 }
 
 void MouseDriver::loop() {

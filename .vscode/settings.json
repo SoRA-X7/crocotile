@@ -10,7 +10,8 @@
     "cstddef": "cpp",
     "functional": "cpp",
     "algorithm": "cpp",
-    "new": "cpp"
+    "new": "cpp",
+    "cmath": "cpp"
   },
   "cmake.configureOnOpen": true
 }

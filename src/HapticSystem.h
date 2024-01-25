@@ -24,11 +24,18 @@ struct HapticSystemConfig {
   int drv_wl;
 };
 
+struct HapticMotorCalibration {
+  float zero_elec_offset;
+  Direction sensor_direction;
+  int motor_pole_pairs;
+};
+
 struct HapticPatternBump {
   int dx;
   int dy;
   float strength;
-  float curve;
+  float curve_x;
+  float curve_y;
 };
 
 class HapticPattern {
@@ -37,7 +44,8 @@ class HapticPattern {
   int x_pos;
   int y_neg;
   int y_pos;
-  int intencity;
+  int intensity_x;
+  int intensity_y;
   int bump_count;
   HapticPatternBump* bumps;
 
@@ -57,17 +65,21 @@ class HapticSystem {
   int sen_i2c_scl;
   int sen_i2c_sda;
   MagneticSensorI2C sensor = MagneticSensorI2C(0, 0, 0, 0);
-  BLDCMotor motor = BLDCMotor(0);
+  LowPassFilter lpf = LowPassFilter(0.05);
+  BLDCMotor motor = BLDCMotor(1);
   BLDCDriver6PWM driver = BLDCDriver6PWM(0, 0, 0, 0, 0, 0);
   HapticPattern* haptic_pattern;
   float mouseOffset;
+  char buf_[72];
 
   void pcaselect();
 
  public:
-  HapticSystem(const HapticSystemConfig& cfg);
+  HapticSystem(const HapticSystemConfig& cfg,
+               const HapticMotorCalibration& calib);
   ~HapticSystem();
 
+  void calibrate();
   bool init();
   void loop();
   void set_pattern(HapticPattern* pat);

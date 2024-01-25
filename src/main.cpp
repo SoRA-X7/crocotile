@@ -20,7 +20,8 @@ const HapticSystemConfig xConf{.direction = 0,
                                .drv_vl = 11,
                                .drv_wh = 46,
                                .drv_wl = 9};
-HapticSystem systemX = HapticSystem(xConf);
+const HapticMotorCalibration xCalib{1.90, Direction::CW, 7};
+HapticSystem systemX = HapticSystem(xConf, xCalib);
 
 // const HapticSystemConfig yConf{1, 1, 15, 16, 6, 7, 4, 5};
 const HapticSystemConfig yConf{.direction = 1,
@@ -34,7 +35,8 @@ const HapticSystemConfig yConf{.direction = 1,
                                .drv_vl = 7,
                                .drv_wh = 4,
                                .drv_wl = 5};
-HapticSystem systemY = HapticSystem(yConf);
+const HapticMotorCalibration yCalib{2.32, Direction::CCW, 7};
+HapticSystem systemY = HapticSystem(yConf, yCalib);
 MouseDriver mouse = MouseDriver(400, &systemX, &systemY, 40, 41);
 
 char* pattern_str = NULL;
@@ -56,13 +58,16 @@ void cmdP(String arg) {
   pattern = new HapticPattern(ts.size());
   int i = 0;
   for (JsonObject t : ts) {
-    HapticPatternBump b{t["x"], t["y"], t["strength"], t["curve"]};
+    HapticPatternBump b{t["x"], t["y"], t["strength"], t["curveX"],
+                        t["curveY"]};
     pattern->bumps[i++] = b;
   }
   pattern->x_neg = pattern_json["xNeg"];
   pattern->x_pos = pattern_json["xPos"];
   pattern->y_neg = pattern_json["yNeg"];
   pattern->y_pos = pattern_json["yPos"];
+  pattern->intensity_x = pattern_json["intensityX"];
+  pattern->intensity_y = pattern_json["intensityY"];
   systemX.set_pattern(pattern);
   systemY.set_pattern(pattern);
   Serial.println("cmd:P ok");
@@ -85,8 +90,8 @@ void cmdR(String arg) {
   Serial.println("cmd:R");
   int valX, valY;
   sscanf(arg.c_str(), "%d,%d", &valX, &valY);
-  systemX.revise_position(valX, 0);
-  systemY.revise_position(valY, 0);
+  systemX.revise_position(valX, valY);
+  systemY.revise_position(valX, valY);
   Serial.println("cmd:R ok");
 }
 

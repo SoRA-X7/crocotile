@@ -1,8 +1,10 @@
 #pragma once
 #include <BleMouse.h>
+#include <SimpleFOC.h>
 
 #include "HapticSystem.h"
 
+#define MOUSE_LPF_TF 0.05
 class MouseDriver {
  private:
   int prev_pos_x;
@@ -14,6 +16,8 @@ class MouseDriver {
   int sens;
   HapticSystem* sys_x;
   HapticSystem* sys_y;
+  LowPassFilter lpf_x = LowPassFilter(MOUSE_LPF_TF);
+  LowPassFilter lpf_y = LowPassFilter(MOUSE_LPF_TF);
   BleMouse mouse;
 
  public:
