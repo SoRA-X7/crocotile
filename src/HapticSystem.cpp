@@ -81,7 +81,7 @@ void HapticSystem::loop() {
 
     float dt = (angle() - mouseOffset) * 400;  // 400 = sens
 
-    int deadzone = direction == 0 ? -15 : 30;
+    int deadzone = direction == 0 ? 0 : 30;
     if (dt < neg - deadzone) {
       strength = 10 * softlin(-(dt - (neg - deadzone)) / 10);
     } else if (dt > pos + deadzone) {
