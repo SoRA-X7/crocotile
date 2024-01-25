@@ -58,16 +58,14 @@ void cmdP(String arg) {
   pattern = new HapticPattern(ts.size());
   int i = 0;
   for (JsonObject t : ts) {
-    HapticPatternBump b{t["x"], t["y"], t["strength"], t["curveX"],
-                        t["curveY"]};
+    HapticPatternBump b{t["direction"], t["t"], t["strength"], t["curve"]};
     pattern->bumps[i++] = b;
   }
-  pattern->x_neg = pattern_json["xNeg"];
-  pattern->x_pos = pattern_json["xPos"];
-  pattern->y_neg = pattern_json["yNeg"];
-  pattern->y_pos = pattern_json["yPos"];
-  pattern->intensity_x = pattern_json["intensityX"];
-  pattern->intensity_y = pattern_json["intensityY"];
+  pattern->x_min = pattern_json["xMin"];
+  pattern->x_max = pattern_json["xMax"];
+  pattern->y_min = pattern_json["yMin"];
+  pattern->y_max = pattern_json["yMax"];
+  pattern->intensity = pattern_json["intensity"];
   systemX.set_pattern(pattern);
   systemY.set_pattern(pattern);
   Serial.println("cmd:P ok");

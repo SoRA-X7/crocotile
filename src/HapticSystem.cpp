@@ -76,29 +76,30 @@ void HapticSystem::loop() {
   motor.loopFOC();
   float strength = 0;
   if (haptic_pattern != NULL && haptic_pattern->bumps != NULL) {
-    int neg = direction == 0 ? haptic_pattern->x_neg : haptic_pattern->y_neg;
-    int pos = direction == 0 ? haptic_pattern->x_pos : haptic_pattern->y_pos;
+    int min = direction == 0 ? haptic_pattern->x_min : haptic_pattern->y_min;
+    int max = direction == 0 ? haptic_pattern->x_max : haptic_pattern->y_max;
 
     float dt = (angle() - mouseOffset) * 400;  // 400 = sens
 
     int deadzone = direction == 0 ? 0 : 30;
-    if (dt < neg - deadzone) {
-      strength = 10 * softlin(-(dt - (neg - deadzone)) / 10);
-    } else if (dt > pos + deadzone) {
-      strength = -10 * softlin(dt - (pos + deadzone) / 10);
+    if (dt < min - deadzone) {
+      strength = 10 * softlin(-(dt - (min - deadzone)) / 10);
+    } else if (dt > max + deadzone) {
+      strength = -10 * softlin(dt - (max + deadzone) / 10);
     } else {
       for (int i = 0; i < haptic_pattern->bump_count; i++) {
         auto bump = haptic_pattern->bumps[i];
-        float curve = direction == 0 ? bump.curve_x : bump.curve_y;
-        int t = dt - (direction == 0 ? bump.dx : bump.dy);
+        if (direction != bump.direction) continue;
+
+        float curve = bump.curve;
+        int t = dt - bump.dt;
         float s = 0;
         if (-curve < t && t < 0) {
           s += bump.strength * (-t - curve) / curve;
         } else if (0 < t && t < curve) {
           s += bump.strength * (-t + curve) / curve;
         }
-        s *= direction == 0 ? haptic_pattern->intensity_x
-                            : haptic_pattern->intensity_y;
+        s *= haptic_pattern->intensity;
         strength += s;
       }
     }

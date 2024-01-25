@@ -31,21 +31,19 @@ struct HapticMotorCalibration {
 };
 
 struct HapticPatternBump {
-  int dx;
-  int dy;
+  int direction;
+  int dt;
   float strength;
-  float curve_x;
-  float curve_y;
+  float curve;
 };
 
 class HapticPattern {
  public:
-  int x_neg;
-  int x_pos;
-  int y_neg;
-  int y_pos;
-  int intensity_x;
-  int intensity_y;
+  int x_min;
+  int x_max;
+  int y_min;
+  int y_max;
+  int intensity;
   int bump_count;
   HapticPatternBump* bumps;
 
