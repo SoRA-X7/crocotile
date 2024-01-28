@@ -93,6 +93,16 @@ void cmdR(String arg) {
   Serial.println("cmd:R ok");
 }
 
+void cmdS(String arg) {
+  Serial.println("cmd:S");
+  int new_sens;
+  sscanf(arg.c_str(), "%d", &new_sens);
+  systemX.set_sens(new_sens);
+  systemY.set_sens(new_sens);
+  mouse.set_sens(new_sens);
+  Serial.println("cmd:S ok");
+}
+
 void runCommand() {
   if (!Serial.available()) return;
   String cmd = Serial.readStringUntil('\n');
@@ -102,6 +112,8 @@ void runCommand() {
     cmdN();
   } else if (cmd[0] == 'R') {
     cmdR(cmd.substring(1));
+  } else if (cmd[0] == 'S') {
+    cmdS(cmd.substring(1));
   }
 }
 
@@ -113,7 +125,7 @@ void mouseLoop(void* params) {
 }
 
 void setup() {
-  pattern_str = (char*)malloc(sizeof(char) * 32768);
+  pattern_str = ((char*)malloc(sizeof(char)) * 32768);
   // put your setup code here, to run once:
   Serial.begin(115200);  // Log
                          //   Serial1.begin(115200);  // To mouse

@@ -58,6 +58,7 @@ class HapticPattern {
 class HapticSystem {
  private:
   int direction;
+  int sens = 400;
   int sen_pca_id;
   TwoWire wire = TwoWire(0);
   int sen_i2c_scl;
@@ -80,6 +81,7 @@ class HapticSystem {
   void calibrate();
   bool init();
   void loop();
+  void set_sens(int _sens);
   void set_pattern(HapticPattern* pat);
   void revoke_pattern();
   void revise_position(int x, int y);

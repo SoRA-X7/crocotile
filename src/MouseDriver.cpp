@@ -65,3 +65,5 @@ void MouseDriver::right_release() {
   Serial.println("right_r");
   if (mouse.isConnected()) mouse.release(2);
 }
+
+void MouseDriver::set_sens(int _sens) { sens = _sens; }

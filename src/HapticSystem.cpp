@@ -79,9 +79,9 @@ void HapticSystem::loop() {
     int min = direction == 0 ? haptic_pattern->x_min : haptic_pattern->y_min;
     int max = direction == 0 ? haptic_pattern->x_max : haptic_pattern->y_max;
 
-    float dt = (angle() - mouseOffset) * 400;  // 400 = sens
+    float dt = (angle() - mouseOffset) * sens;
 
-    int deadzone = direction == 0 ? 0 : 30;
+    int deadzone = 0;
     if (dt < min - deadzone) {
       strength = 10 * softlin(-(dt - (min - deadzone)) / 10);
     } else if (dt > max + deadzone) {
@@ -108,6 +108,8 @@ void HapticSystem::loop() {
   motor.monitor();
 }
 
+void HapticSystem::set_sens(int _sens) { sens = _sens; }
+
 void HapticSystem::set_pattern(HapticPattern* pat) {
   this->haptic_pattern = pat;
   this->mouseOffset = this->angle();
@@ -117,9 +119,9 @@ void HapticSystem::revoke_pattern() { this->haptic_pattern = NULL; }
 
 void HapticSystem::revise_position(int x, int y) {
   int t = this->direction == 0 ? x : y;
-  float dt = (angle() - mouseOffset) * 400;  // 400 = sens
+  float dt = (angle() - mouseOffset) * sens;
   float diff = dt - t;
-  mouseOffset += diff / 400;
+  mouseOffset += diff / sens;
 }
 
 float HapticSystem::angle() { return lpf(motor.shaftAngle()); }

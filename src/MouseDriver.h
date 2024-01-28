@@ -29,4 +29,5 @@ class MouseDriver {
   void left_release();
   void right_press();
   void right_release();
+  void set_sens(int _sens);
 };
